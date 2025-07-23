@@ -1,24 +1,12 @@
-# Stage 1: Build the plugin
-FROM maven:3.8.7-openjdk-8-slim AS builder
+FROM jenkins/jenkins:lts
 
-# Set working directory
-WORKDIR /app
+USER root
 
-# Copy all project files
-COPY . .
+# Optional: install curl if needed
+RUN apt-get update && apt-get install -y curl
 
-# Build the plugin (skip tests if needed)
-RUN mvn clean package -DskipTests
+# Switch back to jenkins user
+USER jenkins
 
-# Stage 2: Runtime container (optional, for deployment)
-# Since this is a plugin, it's usually published to a repo — but if you want to keep the JAR in a container:
-FROM openjdk:8-jre-slim
-
-# Create app directory
-WORKDIR /plugin
-
-# Copy the built JAR from the previous stage
-COPY --from=builder /app/target/*.jar ./maven-license-plugin.jar
-
-# Default command (optional)
-CMD ["java", "-jar", "maven-license-plugin.jar"]
+# Install the unique-id plugin
+RUN jenkins-plugin-cli --plugins unique-id
